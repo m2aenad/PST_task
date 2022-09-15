@@ -186,7 +186,6 @@ def show_fix(duration,start_time,measured_refresh):
     fix_dur = fix_clock.getTime()
 
     return (fix_onset,fix_dur)
-
 ##Basics for the experiment.
 
 
@@ -295,7 +294,7 @@ for i in range(20):
 
 #Shuffle bitmaps so images used as stims A, B, C, etc. vary across subjects.
 
-pic_list = ['1.bmp', '2.bmp', '3.bmp', '4.bmp', '5.bmp', '6.bmp']
+pic_list = [os.path.join(stimpath,'1.bmp'), os.path.join(stimpath,'2.bmp'), os.path.join(stimpath,'3.bmp'), os.path.join(stimpath,'4.bmp'), os.path.join(stimpath,'5.bmp'), os.path.join(stimpath,'6.bmp')]
 np.random.shuffle(pic_list) 
 
 stim_A = pic_list[0]
@@ -427,7 +426,7 @@ for block in range(num_blocks):
         win.flip()
         k = event.waitKeys()
 
-        if k[0] == 'equal':
+        if k[0] == 'o':
             advance = 'true'
 
         elif k[0] == 'q':
