@@ -245,20 +245,20 @@ trials_per_stim = 10 #Number times stim on left out of 20 trials.
 
 #Make master list of stim lists.
 
-list = [1 for x in range(num_stims)]
+stim_list = [1 for x in range(num_stims)]
 count = 1
 for x in range(num_stims):
-    list[x] = [count for y in range(trials_per_stim)]
+    stim_list[x] = [count for y in range(trials_per_stim)]
     count+=1
 
 #Assign the individual stim lists to stim names.
 
-A = list[0]
-C = list[1]
-E = list[2]
-F = list[3]
-D = list[4]
-B = list[5]
+A = stim_list[0]
+C = stim_list[1]
+E = stim_list[2]
+F = stim_list[3]
+D = stim_list[4]
+B = stim_list[5]
 
 #Make the reward probability vectors.
 
