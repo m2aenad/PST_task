@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
-#REWMEM fMRI PST training script.
-#Last Updated: February 17, 2014
-#Author: Dan Dillon
+#fMRI PST training script.
+#Last Updated: Sep 8, 2022
+#Original Author: Dan Dillon
+#Updated by: G Shearrer and Y Akmadjonova
 
+import os
 import math
 import numpy as np
 import pandas as pd
@@ -15,8 +17,10 @@ refresh = 16.7
 
 #Basic parameters.
 
-num_disdaqs = 5
-TR = 3
+num_disdaqs = 5 # not sure what this is yet
+
+TR = 3 #Shouldn't need not scanning
+
 stim_dur = 3
 fdbk_dur = 1
 disdaq_time = int(math.floor((num_disdaqs*3000)/refresh)) #15s (5TRs)
@@ -116,7 +120,7 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     if accuracy == 1 and sched_out == 1:
 
-        corr_sound.play()
+        #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
             win.flip()
@@ -127,7 +131,7 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     elif accuracy == 1 and sched_out == 0:
 
-        incorr_sound.play()
+        #incorr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             zero.draw()
             win.flip()
@@ -138,7 +142,7 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     elif accuracy == 0 and sched_out == 1:
 
-        incorr_sound.play()
+        #incorr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             zero.draw()
             win.flip()
@@ -149,7 +153,7 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     elif accuracy == 0 and sched_out == 0:
         
-        corr_sound.play()
+        #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
             win.flip()
@@ -185,10 +189,10 @@ def show_fix(duration,start_time,measured_refresh):
 
 ##Basics for the experiment.
 
-#Window.
 
+#Window.
 wintype='pyglet' 
-win = visual.Window([1280,800], fullscr = 'True', allowGUI = False, monitor = 'Dan Mac', color = 'black', winType=wintype)
+win = visual.Window([600,400], fullscr = 'True', allowGUI = False, monitor = 'MacAir', color = 'black', winType=wintype) #check window here
 
 #Object, response, fix, and instruction stims.
 instruct = visual.TextStim(win, text='Text', alignHoriz = 'center', height = 0.12, wrapWidth = 350, color = 'white')
@@ -196,21 +200,23 @@ fix = visual.TextStim(win, text = '+')
 left_choice = visual.Circle(win, radius = 0.3, lineColor = 'ForestGreen', lineWidth = 2.0, pos = [-0.4,0])
 right_choice = visual.Circle(win, radius = 0.3, lineColor = 'ForestGreen', lineWidth = 2.0, pos = [0.4,0])
 
+stimpath = '/Users/gracer/Desktop/PST_Py_Stims'
+
 #Feedback stims.
-reward = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = 'Stimuli/reward.bmp')
-zero = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = 'Stimuli/zero.bmp')
+reward = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = os.path.join(stimpath,'reward.bmp'))
+zero = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = os.path.join(stimpath,'zero.bmp'))
 no_resp = visual.TextStim(win, text='No Response Detected!', height = 0.15, wrapWidth = 35, color = 'red')
 
 #Sounds.
-corr_sound = sound.SoundPygame(value='Stimuli/correct.ogg')
-incorr_sound = sound.SoundPygame(value='Stimuli/incorrect.ogg')
-advance_sound = sound.SoundPygame(value='Stimuli/click_quiet.ogg')
+#corr_sound = sound.SoundPygame(value=os.path.join(stimpath,'Stimuli/correct.ogg'))
+#incorr_sound = sound.SoundPygame(value=os.path.join(stimpath,'Stimuli/incorrect.ogg'))
+#advance_sound = sound.SoundPygame(value=os.path.join(stimpath,'Stimuli/click_quiet.ogg'))
 
 #Rating stims.
-feedback_image = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = 'Stimuli/reward.bmp')
+feedback_image = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = os.path.join(stimpath,'reward.bmp'))
 rating_text = visual.TextStim(win, text = 'How Do You Feel Right Now?', pos = [0,0.5], height = 0.18, wrapWidth = 35, color = 'white')
-valence_rate = visual.ImageStim(win, units = 'cm', size = [22.44,6.42], pos = [0,-7.0], image = 'Stimuli/valence2.bmp')
-arousal_rate = visual.ImageStim(win, units = 'cm', size = [22.44,6.42], pos = [0,-7.0], image = 'Stimuli/arousal2.bmp')
+valence_rate = visual.ImageStim(win, units = 'cm', size = [22.44,6.42], pos = [0,-7.0], image = os.path.join(stimpath,'valence2.bmp'))
+arousal_rate = visual.ImageStim(win, units = 'cm', size = [22.44,6.42], pos = [0,-7.0], image = os.path.join(stimpath,'arousal2.bmp'))
 b0_choice = visual.Rect(win, units = 'cm', width = 3.5, height = 6.2, lineColor = 'ForestGreen', lineWidth = 4.0, pos = [-9.4,-7.0])
 b1_choice = visual.Rect(win, units = 'cm', width = 3.5, height = 6.2, lineColor = 'ForestGreen', lineWidth = 4.0, pos = [-4.8,-7.0])
 b2_choice = visual.Rect(win, units = 'cm', width = 3.5, height = 6.2, lineColor = 'ForestGreen', lineWidth = 4.0, pos = [-0.2,-7.0])
@@ -289,7 +295,7 @@ for i in range(20):
 
 #Shuffle bitmaps so images used as stims A, B, C, etc. vary across subjects.
 
-pic_list = ['Stimuli/1.bmp', 'Stimuli/2.bmp', 'Stimuli/3.bmp', 'Stimuli/4.bmp', 'Stimuli/5.bmp', 'Stimuli/6.bmp']
+pic_list = ['1.bmp', '2.bmp', '3.bmp', '4.bmp', '5.bmp', '6.bmp']
 np.random.shuffle(pic_list) 
 
 stim_A = pic_list[0]
@@ -336,12 +342,12 @@ for i in range(len(inst_text)):
         resp = allKeys[0][0]
 
         if resp == left_key:
-            advance_sound.play()
+            #advance_sound.play()
             advance = 'true'
             allKeys = []
 
         elif resp == quit_key:
-            advance_sound.play()
+            #advance_sound.play()
             core.quit()
 
 #Run experimental trials.
@@ -485,7 +491,7 @@ for block in range(num_blocks):
             if allKeys:
                 resp = allKeys[0][0]
                 trial_RT=allKeys[0][1]
-                advance_sound.play()
+                #advance_sound.play()
 
                 if resp == quit_key:
                     core.quit()
@@ -562,7 +568,7 @@ for block in range(num_blocks):
 
                 if resp == left_key:
                     advance = 'true'
-                    advance_sound.play()
+                    #advance_sound.play()
                     allKeys = []
 
                 elif resp == quit_key:
@@ -597,11 +603,11 @@ for i in range(len(rate_text)):
 
             if resp == b1:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 allKeys = []
 
             else:
-                advance_sound.play()
+                #advance_sound.play()
                 core.quit()
 
 #Valence instructions.
@@ -625,11 +631,11 @@ for i in range(len(valence_rate_inst)):
             
             if resp == b1:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 allKeys = []
 
             else:
-                advance_sound.play()
+                #advance_sound.play()
                 core.quit()
 
 #Set-up file to collect ratings data.
@@ -648,7 +654,7 @@ while iti_frameN <= 120:
     win.flip()
     iti_frameN = iti_frameN + 1
 
-outcome_list = ['Stimuli/reward.bmp','Stimuli/zero.bmp']
+outcome_list = ['reward.bmp','zero.bmp']
 
 for i in range(len(outcome_list)):
 
@@ -657,11 +663,11 @@ for i in range(len(outcome_list)):
     rate_frameN = 0
     advance = 'false'
 
-    feedback_image.setImage(value=outcome_list[i])
+    feedback_image.setImage(value=os.path.join(stimpath, outcome_list[i]))
 
-    if outcome_list[i] == 'Stimuli/reward.bmp':
+    if outcome_list[i] == 'reward.bmp':
         outcome = 'reward'
-        corr_sound.play()
+        #corr_sound.play()
         while fdbk_frameN <= 120:
             feedback_image.draw()
             win.flip()
@@ -673,7 +679,7 @@ for i in range(len(outcome_list)):
 
     else:
         outcome = 'zero'
-        incorr_sound.play()
+        #incorr_sound.play()
         while fdbk_frameN <= 120:
             feedback_image.draw()
             win.flip()
@@ -693,7 +699,7 @@ for i in range(len(outcome_list)):
             resp = allKeys[0][0]
             if resp == b0:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 0
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -704,7 +710,7 @@ for i in range(len(outcome_list)):
 
             if resp == b1:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 1
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -715,7 +721,7 @@ for i in range(len(outcome_list)):
 
             if resp == b2:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 2
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -726,7 +732,7 @@ for i in range(len(outcome_list)):
 
             if resp == b3:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 3
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -737,7 +743,7 @@ for i in range(len(outcome_list)):
 
             if resp == b4:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 4
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -781,7 +787,7 @@ for i in range(len(arousal_rate_inst)):
             resp = allKeys[0][0]
             
             if resp == b1:
-                advance_sound.play()
+                #advance_sound.play()
                 advance = 'true'
 
             else:
@@ -797,7 +803,7 @@ while iti_frameN <= 120:
     win.flip()
     iti_frameN = iti_frameN + 1
 
-outcome_list = ['Stimuli/reward.bmp','Stimuli/zero.bmp']
+outcome_list = ['reward.bmp','zero.bmp']
 
 for i in range(len(outcome_list)):
 
@@ -808,9 +814,9 @@ for i in range(len(outcome_list)):
 
     feedback_image.setImage(value=outcome_list[i])
 
-    if outcome_list[i] == 'Stimuli/reward.bmp':
+    if outcome_list[i] == 'reward.bmp':
         outcome = 'reward'
-        corr_sound.play()
+        #corr_sound.play()
         while fdbk_frameN <= 120:
             feedback_image.draw()
             win.flip()
@@ -822,7 +828,7 @@ for i in range(len(outcome_list)):
 
     else:
         outcome = 'zero'
-        incorr_sound.play()
+        #incorr_sound.play()
         while fdbk_frameN <= 120:
             feedback_image.draw()
             win.flip()
@@ -842,7 +848,7 @@ for i in range(len(outcome_list)):
             resp = allKeys[0][0]
             if resp == b0:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 0
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -853,7 +859,7 @@ for i in range(len(outcome_list)):
 
             if resp == b1:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 1
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -864,7 +870,7 @@ for i in range(len(outcome_list)):
 
             if resp == b2:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 2
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -875,7 +881,7 @@ for i in range(len(outcome_list)):
 
             if resp == b3:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 3
                 while rate_frameN <= 60:
                     rating_text.draw()
@@ -886,7 +892,7 @@ for i in range(len(outcome_list)):
 
             if resp == b4:
                 advance = 'true'
-                advance_sound.play()
+                #advance_sound.play()
                 rating = 4
                 while rate_frameN <= 60:
                     rating_text.draw()
