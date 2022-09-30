@@ -21,9 +21,10 @@ num_disdaqs = 5 # not sure what this is yet
 
 TR = 3 #Shouldn't need not scanning
 
+
 stim_dur = 3
 fdbk_dur = 1
-disdaq_time = int(math.floor((num_disdaqs*3000)/refresh)) #15s (5TRs)
+disdaq_time = int(math.floor((num_disdaqs*3000)/refresh)) #15s (5TRs) math.floor rounds to nearest int
 num_trials = 60 #Per block.
 trial_dur = 8 #On average.
 lastHRF = 15 #Time in sec, adjusted on-fly to account for timing errors.
@@ -45,19 +46,34 @@ b3 = '3'
 b4 = '4'
 
 ##GUI to get subject number, date.
+monSize = [800, 600]
+info = {}
+info['fullscr'] = False
+info['test?'] = False
+#info['port'] = '/dev/tty.usbserial'
+info['participant'] = 'test'
+#info['run']='run01'
+info['computer']= 'enter computer name here'
+info['dateStr'] = data.getDateStr()
 
-try:
-    expInfo = misc.fromFile('PST_fMRI_lastParams.pickle')
-except:
-    expInfo = {'subject':'999'}
-expInfo['dateStr'] = data.getDateStr()
+dlg = gui.DlgFromDict(info)
 
-dlg = gui.DlgFromDict(expInfo, title='PST_fMRI', fixed=['dateStr'])
+    
+#try:
+#    expInfo = misc.fromFile('PST_fMRI_lastParams.pickle')
+#except:
+#    expInfo = {'subject':'999'}
+#expInfo['dateStr'] = data.getDateStr()
+
+#dlg = gui.DlgFromDict(expInfo, title='PST_fMRI', fixed=['dateStr'])
+
 if dlg.OK:
-    misc.toFile('PST_fMRI_lastParams.pickle', expInfo) 
+    misc.toFile('PST_fMRI_lastParams.pickle', info) 
 else:
     core.quit()
-
+#/Users/gracer/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofWyoming/M2AENAD Lab - Documents/RESEARCH/GRRL/PST
+stimpath = '/Users/%s/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofWyoming/M2AENAD Lab - Documents/RESEARCH/GRRL/PST/PST_Py_Stims'%(info['computer'])
+datapath = '/Users/%s/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofWyoming/M2AENAD Lab - Documents/RESEARCH/GRRL/PST/data'%(info['computer'])
 #Functions.
 
 def check_rand (in_array,num_array,num_row): #Cannot have more than 6 consecutive reward outcomes scheduled.
@@ -191,15 +207,13 @@ def show_fix(duration,start_time,measured_refresh):
 
 #Window.
 wintype='pyglet' 
-win = visual.Window([600,400], fullscr = 'True', allowGUI = False, monitor = 'MacAir', color = 'black', winType=wintype) #check window here
+win = visual.Window([600,400], fullscr=info['fullscr'], allowGUI = False, monitor = 'MacAir', color = 'black', winType=wintype) #check window here
 
 #Object, response, fix, and instruction stims.
 instruct = visual.TextStim(win, text='Text', alignHoriz = 'center', height = 0.12, wrapWidth = 350, color = 'white')
 fix = visual.TextStim(win, text = '+')
 left_choice = visual.Circle(win, radius = 0.3, lineColor = 'ForestGreen', lineWidth = 2.0, pos = [-0.4,0])
 right_choice = visual.Circle(win, radius = 0.3, lineColor = 'ForestGreen', lineWidth = 2.0, pos = [0.4,0])
-
-stimpath = '/Users/gracer/Desktop/PST_Py_Stims'
 
 #Feedback stims.
 reward = visual.ImageStim(win, units = 'norm', size = [1,1], pos = [0,0], image = os.path.join(stimpath,'reward.bmp'))
@@ -241,7 +255,7 @@ for dur in range(len(fix_list)):
 
 num_blocks = 4
 num_stims = 6
-trials_per_stim = 10 #Number times stim on left out of 20 trials.
+trials_per_stim = 10 # Number times stim on left out of 20 trials.
 
 #Make master list of stim lists.
 
@@ -309,7 +323,8 @@ stim_B = pic_list[5]
 stim_rand = {'stim_A':pic_list[0], 'stim_C':pic_list[1], 'stim_E':pic_list[2], 'stim_F':pic_list[3], 'stim_D':pic_list[4], 'stim_B':pic_list[5]}
 
 df = pd.DataFrame(stim_rand.items())
-df.to_csv(expInfo['subject']+'_PST_stim_rand.csv', header=False, index=False)
+df.to_csv(os.path.join(datapath,'%s_PST_stim_rand.csv'%(info['participant'])), header=False, index=False)
+#df.to_csv(info['participant']+'_PST_stim_rand.csv', header=False, index=False)
 
 #Clocks.
 
@@ -318,8 +333,9 @@ fMRI_clock = core.Clock()
 
 #File to collect training data. 
 
-train_file = expInfo['subject'] + '_' + expInfo['dateStr']
-trainFile = open(train_file+'_PST_fMRI_train.csv', 'w')
+#train_file = info['participant'] + '_' + info['dateStr']
+train_file = os.path.join(datapath, '%s_%s_PST_fMRI_train.csv'%(info['participant'], info['dateStr']))
+trainFile = open(train_file, 'w')
 trainFile.write('block,trial_num,left_stim,left_stim_number,right_stim,right_stim_number,object_onset,object_duration,response,response_onset,trial_RT,accuracy,isi_onset,isi_duration,scheduled_outcome,feedback,feedback_onset,feedback_duration,iti_onset,iti_duration\n')
 
 ##Start the study.
@@ -639,7 +655,7 @@ for i in range(len(valence_rate_inst)):
 
 #Set-up file to collect ratings data.
 
-ratefile = expInfo['subject'] + '_' + expInfo['dateStr']
+ratefile = info['subject'] + '_' + info['dateStr']
 PST_Rate_Data_File = open(ratefile+'_PST_fMRI_ratings.csv', 'w')
 PST_Rate_Data_File.write('stimulus,prompt,rating\n')
 
