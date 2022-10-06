@@ -32,7 +32,7 @@ TR = 3 #Shouldn't need not scanning
 
 
 stim_dur = 3
-fdbk_dur = 1
+fdbk_dur = 1 # make this longer and match this to the ser.write(b'S') so that the single to the candy machine stops whent the feedback stops
 disdaq_time = int(math.floor((num_disdaqs*3000)/refresh)) #15s (5TRs) math.floor rounds to nearest int
 num_trials = 60 #Per block.
 trial_dur = 8 #On average.
@@ -149,12 +149,14 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
         #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
-            ser.write(52)
-            cc=str(ser.readline())
-            ser.write(52)
+            #cc=str(ser.readline()) # check what this does 
+            #ser.write(52) # check what this does
             win.flip()
+            ser.write(b'G')
+            # how much time should pass #
         
         fdbk_dur = fdbk_clock.getTime()
+        ser.write(b'S')
 
         return ('reward',fdbk_onset,fdbk_dur)
 
