@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 from psychopy import core, data, event, gui, misc, sound, visual
 import serial
-
 ser = serial.Serial('COM4', 9800)
 
 cwd = os.getcwd()
@@ -24,6 +23,7 @@ stimpath = (cwd + r"\PST_Py_Stims")
 
 refresh = 16.7
 
+
 #Basic parameters.
 
 num_disdaqs = 5 # not sure what this is yet
@@ -32,7 +32,7 @@ TR = 3 #Shouldn't need not scanning
 
 
 stim_dur = 3
-fdbk_dur = 1 # make this longer and match this to the ser.write(b'S') so that the single to the candy machine stops whent the feedback stops
+fdbk_dur = 1
 disdaq_time = int(math.floor((num_disdaqs*3000)/refresh)) #15s (5TRs) math.floor rounds to nearest int
 num_trials = 60 #Per block.
 trial_dur = 8 #On average.
@@ -144,19 +144,16 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
     fdbk_clock.reset()
     fdbk_onset = start_time
 
+    
     if accuracy == 1 and sched_out == 1:
-
+        ser.write(52) #new
         #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
-            #cc=str(ser.readline()) # check what this does 
-            #ser.write(52) # check what this does
             win.flip()
-            ser.write(b'G')
-            # how much time should pass #
         
         fdbk_dur = fdbk_clock.getTime()
-        ser.write(b'S')
+        
 
         return ('reward',fdbk_onset,fdbk_dur)
 
@@ -183,7 +180,8 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
         return ('zero',fdbk_onset,fdbk_dur)
 
     elif accuracy == 0 and sched_out == 0:
-        
+
+        ser.write(52) #new
         #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
@@ -563,6 +561,7 @@ for block in range(num_blocks):
             act_trial_dur = object_dur + isi[1] + feedback[2]
             iti_dur = iti_dur + int(round(((targ_trial_dur - act_trial_dur)*1000)/refresh))
             iti = show_fix(iti_dur,fMRI_clock.getTime(),refresh)
+
 
         #Write out the data.
 
