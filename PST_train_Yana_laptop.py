@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from psychopy import core, data, event, gui, misc, sound, visual
 import serial
-ser = serial.Serial('COM4', 9800)
+ser = serial.Serial('COM4', 9600, timeout = 1)
 
 cwd = os.getcwd()
 stimpath = (cwd + r"\PST_Py_Stims")
