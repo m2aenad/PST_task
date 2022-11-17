@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from psychopy import core, data, event, gui, misc, sound, visual
 import serial
-ser = serial.Serial('COM4', 9600, timeout = 1)
+ser = serial.Serial('COM3', 9600, write_timeout = 3)
 
 cwd = os.getcwd()
 stimpath = (cwd + r"\PST_Py_Stims")
@@ -32,7 +32,7 @@ TR = 3 #Shouldn't need not scanning
 
 
 stim_dur = 3
-fdbk_dur = 1
+fdbk_dur = 5
 disdaq_time = int(math.floor((num_disdaqs*3000)/refresh)) #15s (5TRs) math.floor rounds to nearest int
 num_trials = 60 #Per block.
 trial_dur = 8 #On average.
@@ -146,13 +146,15 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     
     if accuracy == 1 and sched_out == 1:
-        ser.write(52) #new
+        ser.write(b'T')
+        
         #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
             win.flip()
         
         fdbk_dur = fdbk_clock.getTime()
+        ser.write(b'F')
         
 
         return ('reward',fdbk_onset,fdbk_dur)
@@ -181,13 +183,15 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     elif accuracy == 0 and sched_out == 0:
 
-        ser.write(52) #new
+        ser.write(b'T') #new there was 
         #corr_sound.play()
         for frames in range(int(math.floor(1000/refresh))):
             reward.draw()
             win.flip()
 
         fdbk_dur = fdbk_clock.getTime()
+        ser.write(b'F')
+
 
         return ('reward',fdbk_onset,fdbk_dur)
 

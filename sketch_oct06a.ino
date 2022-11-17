@@ -3,7 +3,7 @@
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // to motor port #1 (M3 and M4)
-Adafruit_StepperMotor *myMotor = AFMS.getStepper(516, 2); 
+Adafruit_StepperMotor *myMotor = AFMS.getStepper(516, 1); 
 #define PHOTODETECTOR 27 //define Beambreaker port
 int x = 0;  //var for motor state
 int incomingByte = 0; // var for incoming data
@@ -16,6 +16,8 @@ void setup() {
    if (!AFMS.begin(1000)) {  // OR a different frequency, say 1KHz
     Serial.println("Could not find Motor Shield. Check wiring.");
    while (1);
+  // myMotor->setSpeed(5);
+  // myMotor->run(RELEASE);
   }
   Serial.println("Motor Shield found.");
  
@@ -29,15 +31,19 @@ void loop() {
  if (Serial.available() > 0) {
     // read the incoming byte:
     incomingByte = Serial.read();    
-    // say what you got:
+    // prints the input:
     Serial.print("Input received: ");
     Serial.println(incomingByte, DEC);
+    if (incomingByte == 'T')
     x=1; //change motor state
+    if (incomingByte == 'F')
+    x=0;
   }
 
   //to launch the motor 
   if (x == 1) {
-     myMotor->step(1, FORWARD, SINGLE); 
+     myMotor->step(1, FORWARD, SINGLE);
+     // Timeout(3); 
   }
 
 
@@ -46,7 +52,14 @@ void loop() {
      Serial.println("PHOTODETECTOR LOW");       // control message in com port 
      x = 0;              //change motor state
      myMotor->release();
-     delay(3000);    
+     delay(500);    
+    }
+
+     if (x == 0) {
+     Serial.println("x=0");       // control message in com port 
+     x = 0;              //change motor state
+     myMotor->release();
+     delay(500);    
     }
     
 }
