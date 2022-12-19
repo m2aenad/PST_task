@@ -17,6 +17,8 @@ import serial
 import sys
 from itertools import count, takewhile
 from typing import Iterator
+import sys
+import bluetooth
 #from bleak import BleakClient, BleakScanner
 #from bleak.backends.characteristic import BleakGATTCharacteristic
 #from bleak.backends.device import BLEDevice
@@ -75,10 +77,18 @@ info['Participant'] = 'test'
 #info['run']='run01'
 info['Computer']= 'enter computer name here'
 info['Date'] = data.getDateStr()
-info['Bluetooth'] = True
+info['Bluetooth'] = 'enter blutooth address here ex. C4:B9:DA:5F:83:50'
 info['Com_port'] = 'COM4'
 
 dlg = gui.DlgFromDict(info)
+
+def blue_trigger(input):
+    bd_addr = info['Bluetooth']
+    port = 1
+    sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+    sock.connect((bd_addr,port))
+    sock.send(input.encode())
+    return('sent %s'%input)
 
     
 #try:
@@ -160,7 +170,9 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     if accuracy == 1 and sched_out == 1:
         if info['Bluetooth']: #if info about bluetoth is true
-            os.system(r'pythonw.exe ./BLE_SEND.PY')
+            #os.system(r'pythonw.exe ./BLE_SEND.PY')
+            # Here we will send a T through the BLE_SEND module to the motor to trigger go
+            # Add a wait or count of 3 sec (for now) and then send an F to stop the motor (in future if we want to streamline the F we can) This is an explicit stop for sanity
         else:
             ser.write(b'T')        
         #corr_sound.play()
@@ -198,7 +210,7 @@ def show_fdbk(accuracy,sched_out,action,start_time,measured_refresh):
 
     elif accuracy == 0 and sched_out == 0:
         if info['Bluetooth']:
-            os.system(r'pythonw.exe ./BLE_SEND.PY')
+#             os.system(r'pythonw.exe ./BLE_SEND.PY')
         else:
             ser.write(b'T')
         #corr_sound.play()
