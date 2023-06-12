@@ -11,14 +11,14 @@ import socket
 from psychopy import core, data, event, gui, misc, visual, prefs, monitors
 from itertools import count, takewhile
 from typing import Iterator
-from bleak import BleakClient, BleakScanner
-from bleak.backends.characteristic import BleakGATTCharacteristic
-from bleak.backends.device import BLEDevice
-from bleak.backends.scanner import AdvertisementData
+#from bleak import BleakClient, BleakScanner
+#from bleak.backends.characteristic import BleakGATTCharacteristic
+#from bleak.backends.device import BLEDevice
+#from bleak.backends.scanner import AdvertisementData
 # Set the audio preferences to use PTB first and then import psychopy.sound
-prefs.hardware['audioLib'] = ['PTB','pyo','pygame','sounddevice']
-from psychopy import sound
-import psychopy_sounddevice
+#prefs.hardware['audioLib'] = ['PTB','pyo','pygame','sounddevice']
+#from psychopy import sound
+#import psychopy_sounddevice
 import SerialHandler
 import keyboard
 
