@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from psychopy import core, data, event, gui, misc, sound, visual
 import serial
+import dill
 import pickle
 import datetime
 
@@ -18,7 +19,24 @@ def adillyofapickle(basepath, dic, name):
         print('already have %s'%name)
     else:
         os.makedirs(os.path.join(basepath,'%s'%name))
-    pickle.dump(dic, open(os.path.join(basepath,'%s'%name,'%s'%(name)), 'wb'), protocol=4)
+    with open(os.path.join(basepath,'%s'%name,'%s'%name), "wb") as dill_file:
+        dill.dump(dic, dill_file)
+
+
+def clean_quit(basepath, dic, name, task_clock):
+    dic.update({'quit':task_clock.getTime()})
+    adillyofapickle(basepath, dic, name)
+    print(dic)
+    core.quit()
+
+def onetoughjar(path2dic):
+    with open(path2dic, 'rb') as pickle_file:
+        try:
+            while True:
+                output = pickle.load(pickle_file)
+        except EOFError:
+            pass
+    return(output)    
 '''
 All about the pickles
 Each pickle file should be all the data needed to recreate any of the runs including all answers
@@ -48,38 +66,93 @@ pk = {
             }, 
         'data':{
             block:{
-                trial_num:[left_stim_name, 
-                left_stim_number, 
-                right_stim_name, 
-                right_stim_number, 
-                onset, 
-                response, 
-                trail_feedback, 
-                reward, 
-                RT]
+                trial_num:[
+                    left_stim_name, 
+                    left_stim_number, 
+                    right_stim_name, 
+                    right_stim_number, 
+                    shceduled_outcome,
+                    stim_onset,
+                    key_press,
+                    RT,
+                    accuracy,
+                    reward_outcome,
+                    feedback_onset
+                  ]
                 }
             }
         }
     }
 }
 '''
+def settingsGUI():
+    print("Showing GUI")
+    # Create a dictionary with default values for all the settings
+    default_values = {
+        "participant": "GIRRL_####",
+        "Date": data.getDateStr(),
+        "Computer": False,
+        "Com Port": "COM4",
+        "Fullscreen": False,
+        "Bluetooth": False,
+        "test?": False,
+    }
+    # Create the GUI dialog
+    dialog = gui.DlgFromDict(
+        dictionary=default_values,
+        title="Settings",
+        order=["participant", "Date", "Computer", "Com Port", "Fullscreen", "Bluetooth", "test?"],
+        tip={
+            "Com Port": "Enter the communication port",
+            "Computer": "Enter the computer name",
+            "Date": "Enter the date",
+            "Test": "Enter the test name",
+            "participant": "Enter the participant ID",
+            "Fullscreen": "Enable/disable fullscreen mode",
+            "Bluetooth": "Enable/disable Bluetooth",
+            "test?": "Enable/disable test mode",
+        },
+    )
+    if dialog.OK:
+        #print("User entered:", default_values)
+        misc.toFile('lastParams.pickle', default_values)
+        return default_values
 
-def check_quit(check_key, basepath, dic, name):
-    if len(check_key)>0:
-        if check_key[0] == 'q':
-            adillyofapickle(basepath, dic, name)
-            core.quit()
+    else:
+        print("User cancelled the dialog")
+        core.quit()
 
+
+def make_df(dic):
+    all_df = []
+    for key,value in dic['data'].items():
+        df = pd.DataFrame.from_dict(value, orient='index',
+                        columns=['left_stim_name', 
+                        'left_stim_number', 
+                        'right_stim_name', 
+                        'right_stim_number', 
+                        'shceduled_outcome',
+                        'stim_onset',
+                        'key_press',
+                        'RT',
+                        'accuracy',
+                        'reward_outcome',
+                        'feedback_onset'])
+        df['block']= key
+        all_df.append(df)
+    DF = pd.concat(all_df, axis=0)
+    return(DF)
+
+        
 def present_stims(fix,left_stim, right_stim, win, left_key,right_key,quit_key, RT, task_clock, scheduled_outcome):
-    # from psychopy import event
+    stim_onset = task_clock.getTime()
     left_stim.draw()
     right_stim.draw()
     win.flip()
-    # wait for key press
-    key_press = event.waitKeys(keyList = [left_key,right_key,quit_key], timeStamped=RT)
-    return(key_press)
+    key_press = event.waitKeys(keyList = [left_key,right_key,quit_key], timeStamped=RT)# wait for key press
+    return(key_press, stim_onset)
 
-def response_update(key_pressed, win, left_stim, right_stim, left_choice, right_choice, task_clock):  
+def response_update(key_pressed, win, left_stim, right_stim, left_choice, right_choice, task_clock, basepath, dic, name):  
     resp_onset = task_clock.getTime()
     if key_pressed == '1':
         left_choice.draw()
@@ -91,6 +164,9 @@ def response_update(key_pressed, win, left_stim, right_stim, left_choice, right_
         left_stim.draw()
         right_stim.draw()
         win.flip()
+    if key_pressed == 'q':
+        clean_quit(basepath, dic, name, task_clock)
+    
         
 
 def drawing(left_stim, right_stim, fix, left_choice, right_choice, win):
@@ -130,8 +206,9 @@ def show_fdbk(accuracy,sched_out,task_clock, zero, win, reward, X):
     if accuracy == 1 and sched_out == 1:
         reward.draw()
         if X == False:
-            ser.write(52)
-            cc=str(ser.readline())
+            SerialHandler.command_to_send(SerialHandler.moveMotor)     
+            # ser.write(52)
+            # cc=str(ser.readline())
         else:
             print('dispensing candy')
             win.flip()
@@ -140,19 +217,20 @@ def show_fdbk(accuracy,sched_out,task_clock, zero, win, reward, X):
     elif accuracy == 1 and sched_out == 0:
         zero.draw()
         win.flip()
-        return ('zero')
+        return ('correct_unrewarded', fdbk_onset)
     elif accuracy == 0 and sched_out == 1:
         zero.draw()
         win.flip()
-        return ('zero',fdbk_onset)
+        return ('incorrect',fdbk_onset)
     elif accuracy == 0 and sched_out == 0:
+        SerialHandler.command_to_send(SerialHandler.moveMotor)     
         reward.draw()
         win.flip()
-        return ('prob_reward', fdbk_onset)
+        return ('probabalistic_reward', fdbk_onset)
 
 
 
-def starter(small_blocks, stim_rand, win):
+def starter(small_blocks, stim_rand, win, trials_per_stim):
     from psychopy import visual
     for i in range(len(small_blocks)): #Randomize each small block (scramble AB,CD,EF trios).
         np.random.shuffle(small_blocks[i])
@@ -166,7 +244,7 @@ def starter(small_blocks, stim_rand, win):
     rightStims = []
     right_stim_numbers = []
     sch_outcome = []
-    for x in range(20):
+    for x in range(trials_per_stim*2):
         for y in range(3):
             leftStims.append(AllTrials[x,y,0])
             rightStims.append(AllTrials[x,y,1])
@@ -214,22 +292,19 @@ def intro(inst_text, instruct, win, allKeys, left_key, quit_key):
 def stim_mapping(pic_list, datapath, participantID):
     '''
     this will map the images to the stimuli
-    random person
-    writes a csv file
+    random per person
     '''
     np.random.shuffle(pic_list)
     stim_rand = {'stim_A':pic_list[0], 'stim_C':pic_list[1], 'stim_E':pic_list[2], 'stim_F':pic_list[3], 'stim_D':pic_list[4], 'stim_B':pic_list[5]}
-#    df = pd.DataFrame(stim_rand.items())
-#    df.to_csv(os.path.join(datapath,'%s_PST_stim_rand.csv'%(participantID)), header=False, index=False)
     return(stim_rand)
 
 
-def block_it(AB_trialList, CD_trialList, EF_trialList):
+def block_it(AB_trialList, CD_trialList, EF_trialList, trials_per_stim):
     '''
     This concatonates all the of trialLists into a large list
     '''
-    small_blocks = [[i] for i in range(20)]
-    for i in range(20):
+    small_blocks = [[i] for i in range(trials_per_stim*2)]
+    for i in range(trials_per_stim*2):
         small_blocks[i] = np.vstack([AB_trialList[i],CD_trialList[i],EF_trialList[i]])
     return(small_blocks)
 
@@ -245,7 +320,6 @@ def stimulating(num_stims, trials_per_stim):
     for count,x in enumerate(range(num_stims)):
         count = count+1
         stim_list[x] = [count for y in range(trials_per_stim)]
-    # print(stim_list)
     stim_names = {}
     for i,x in enumerate(stim_list):
         stim_names[letters[i]] = x
@@ -279,12 +353,15 @@ def make_it(stim_names):
 
 
 def set_visuals(size, monitor, color, wintype,text, align, ht, wWidth, textcolor, radius):
+    '''
+    Set up all the visuals for the experiment
+    '''
     from psychopy import visual
     win = visual.Window([600,400], fullscr= False, allowGUI = False, monitor = monitor, color = color, winType=wintype) #check window here
     instruct = visual.TextStim(win, text=text, alignHoriz = align, height = ht, wrapWidth = wWidth, color = textcolor)
     fix = visual.TextStim(win, text = '+')
-    left_choice = visual.Circle(win, radius = radius, lineColor = textcolor, lineWidth = 2.0, pos = [-0.4,0])
-    right_choice = visual.Circle(win, radius = radius, lineColor = textcolor, lineWidth = 2.0, pos = [0.4,0])
+    left_choice = visual.Circle(win, radius = radius, lineColor = 'yellow', lineWidth = 2.0, pos = [-0.4,0])
+    right_choice = visual.Circle(win, radius = radius, lineColor = 'yellow', lineWidth = 2.0, pos = [0.4,0])
     parameters = {'win':win, 'instruct':instruct, 'fix':fix, 'left_choice':left_choice, 'right_choice':right_choice}
     return(parameters)
 
